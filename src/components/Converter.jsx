@@ -8,14 +8,18 @@ const Converter = () => {
     const [amount, setAmount] = useState(1);
     const [convertedAmount, setConvertedAmount] = useState(null);
     const [exchangeRate, setExchangeRate] = useState(null);
-    const [error, SetError] = useState("");
+    const [error, setError] = useState(null);
+
+    const API_KEY = "1974937064e4b501c25f870fb6514155";
+    const BASE_URL = `http://api.coinlayer.com`;
 
     const fetchCurrencies = async () => {
     try {
       const response = await axios.get(
-        "https://api.coingecko.com/api/v3/simple/supported_vs_currencies"
+        `${BASE_URL}/list?access_key=${API_KEY}`
       );
-      setCurrencies(response.data);
+      const availableCurrencies = Object.keys(response.data.crypto);
+      setCurrencies(availableCurrencies);
     } catch (err) {
       setError("Failed to fetch currencies. Please try again later.");
     }
@@ -25,22 +29,33 @@ const Converter = () => {
     if (!fromCurrency || !toCurrency) return;
     try {
       const response = await axios.get(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${fromCurrency}&vs_currencies=${toCurrency}`
+        `${BASE_URL}/live?access_key=${API_KEY}&symbols=${fromCurrency}&target=${toCurrency}`
       );
-      setExchangeRate(response.data[fromCurrency][toCurrency]);
-      setConvertedAmount(amount * response.data[fromCurrency][toCurrency]);
+
+      let obj = Object.entries(response.data.rates)
+
+    //   const rate = response.data.rates[toCurrency]
+      const rate = obj[0][1]
+      setExchangeRate(rate);
+      setConvertedAmount(amount * rate);
     } catch (err) {
       setError("Failed to fetch exchange rate. Please try again later.");
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     fetchCurrencies();
     }, []);
 
     useEffect(() => {
+        fetchCurrencies();
+        }, [exchangeRate]);
+
+
+    useEffect(() => {
         fetchExchangeRate();
     }, [fromCurrency, toCurrency, amount]);
+
 
     const handleAmountChange = (e) => {
         setAmount(e.target.value);
@@ -94,7 +109,7 @@ const Converter = () => {
           <strong>Exchange Rate:</strong> {exchangeRate || "Loading..."}
         </div>
         <div className="text-gray-700 mb-4">
-          <strong>Converted Amount:</strong> {convertedAmount || "Loading..."}
+          <strong>Converted Amount:</strong> {convertedAmount ? convertedAmount.toFixed(2) : "Loading..."}
         </div>
       </div>
     </div>
