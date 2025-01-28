@@ -11,7 +11,7 @@ const Converter = () => {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const COINGECKO_API = "https://api.coingecko.com/api/v3";
+    const COINGECKO_API = "/api";
 
     const fetchCurrencies = async () => {
     try {
@@ -31,6 +31,10 @@ const Converter = () => {
         current_price: coin.current_price
       }));
 
+      if (availableCurrencies.length === 0) {
+        throw new Error('No valid currency data recieved');
+      }
+      
       setCurrencies(availableCurrencies);
 
       //Set initial fromCurrency if it hasn't been set yet
