@@ -1,9 +1,21 @@
 import React, {useState, useEffect} from 'react';
 import axios from "axios";
 
+    //Configuration for coinGecko API
+    const COINGECKO_API = "https://api.coingecko.com/api/v3";
+    const API_KEY = "CG-tgw3nSSrZCLFbSDoNFZ3G9yh";
+
+    //Create axios instance with default config
+    const api = axios.create({
+      baseURL: COINGECKO_API,
+      headers: {
+        'x-cg-demo-api-key': API_KEY
+      }
+    });
+
 const Converter = () => {
     const [currencies, setCurrencies] = useState([]);
-    const [fromCurrency, setFromCurrency] = useState("bitcoin");
+    const [fromCurrency, setFromCurrency] = useState("");
     const [toCurrency, setToCurrency] = useState("usd");
     const [amount, setAmount] = useState(1);
     const [convertedAmount, setConvertedAmount] = useState(null);
@@ -11,34 +23,40 @@ const Converter = () => {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const COINGECKO_API = "/api";
-
     const fetchCurrencies = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      //Using the markets endpoint instead of coins/list
-      const response = await axios.get(
-        `${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false`
-      );
-      //Add validation to ensure we have all the required fields
-      const availableCurrencies = response.data
-      .filter(coin => coin && coin.id && coin.symbol && coin.name)// Filter out any incomplete data
-      .map(coin => ({
+      const response = await api.get('/coins/markets',{
+        params: {
+          vs_currency: 'usd',
+          order: 'market_cap_desc',
+          per_page: 100,
+          page: 1,
+          sparkline: false,
+          'x-cg-demo-api-key': API_KEY
+        }
+      });
+
+      if (!response.data) {
+        throw new Error('Invalid response format');
+      }
+      
+      const availableCurrencies = response.data.map(coin => ({
         id: coin.id,
-        Symbol: coin.Symbol || '',
-        name: coin.name || '',
+        symbol: coin.symbol,
+        name: coin.name,
         current_price: coin.current_price
       }));
 
       if (availableCurrencies.length === 0) {
         throw new Error('No valid currency data recieved');
       }
-      
+
       setCurrencies(availableCurrencies);
 
-      //Set initial fromCurrency if it hasn't been set yet
-      if (!fromCurrency && availableCurrencies.length > 0) {
+      //Set initial fromCurrency
+      if (availableCurrencies.length > 0) {
         setFromCurrency(availableCurrencies[0].id);
       }
 
@@ -51,15 +69,19 @@ const Converter = () => {
   };
 
     const fetchExchangeRate = async () => {
-    if (!fromCurrency || !toCurrency) return;
+    if (!fromCurrency) return;
     try {
       setError(null);
-      const response = await axios.get(
-        `${COINGECKO_API}/simple/price?ids=${fromCurrency}&vs_currencies=${toCurrency}`
-      );
+      const response = await api.get('/simple/price', {
+        params: {
+          ids: fromCurrency,
+          vs_currencies: toCurrency,
+          'x-cg-demo-api-key': API_KEY
+        }
+      });
 
       if (!response.data || !response.data[fromCurrency]) {
-        throw new Error ('Invalid exchange rate data recieved');
+        throw new Error ('Invalid price data recieved');
       }
 
       const rate = response.data[fromCurrency][toCurrency];
@@ -77,10 +99,10 @@ const Converter = () => {
     }, []);
 
   useEffect(() => {
-    if (fromCurrency && toCurrency) {
+    if (fromCurrency) {
       fetchExchangeRate();
     }
-  }, [fromCurrency,toCurrency, amount]); 
+  }, [fromCurrency, toCurrency, amount]); 
 
   const handleAmountChange = (e) => {
       const value = parseFloat(e.target.value);
@@ -96,7 +118,7 @@ const Converter = () => {
     );
   }
 
-  //Show Error State
+  //Show Error State 
   if (error) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
@@ -111,14 +133,14 @@ const Converter = () => {
     );
   }
 
-  //Only render the main UI if we have currencies
-  if (currencies.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-        <div className="text-xl">No currencies available</div>
-      </div>
-    );
-  }
+  // //Only render the main UI if we have currencies
+  // if (currencies.length === 0) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+  //       <div className="text-xl">No currencies available</div>
+  //     </div>
+  //   );
+  // }
 
   return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
@@ -163,11 +185,6 @@ const Converter = () => {
             <option value="usd">EUR</option>
             <option value="usd">GBP</option>
             <option value="usd">JPY</option>
-            {/* {currencies.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency.toUpperCase()}
-              </option>
-            ))} */}
           </select>
         </div>
         <div className="text-gray-700 mb-4">
