@@ -1,23 +1,23 @@
 import React, {useState, useEffect} from 'react';
 import axios from "axios";
 
-    //Configuration for coinGecko API
-    const COINGECKO_API = "https://api.coingecko.com/api/v3";
-    const API_KEY = "CG-tgw3nSSrZCLFbSDoNFZ3G9yh";
+//Configuration for coinGecko API
+const COINGECKO_API = "https://api.coingecko.com/api/v3";
+const API_KEY = "CG-tgw3nSSrZCLFbSDoNFZ3G9yh";
 
-    //Create axios instance with default config
-    const api = axios.create({
-      baseURL: COINGECKO_API,
-      headers: {
-        'x-cg-demo-api-key': API_KEY
-      }
-    });
+//Create axios instance with default config
+const api = axios.create({
+  baseURL: COINGECKO_API,
+  headers: {
+  'x-cg-demo-api-key': API_KEY
+    }
+  });
 
 const Converter = () => {
     const [currencies, setCurrencies] = useState([]);
     const [fromCurrency, setFromCurrency] = useState("");
     const [toCurrency, setToCurrency] = useState("usd");
-    const [amount, setAmount] = useState(1);
+    const [amount, setAmount] = useState("");
     const [convertedAmount, setConvertedAmount] = useState(null);
     const [exchangeRate, setExchangeRate] = useState(null);
     const [error, setError] = useState(null);
@@ -199,4 +199,3 @@ const Converter = () => {
 };
 
 export default Converter;
-
